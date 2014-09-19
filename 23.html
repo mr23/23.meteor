@@ -1,0 +1,145 @@
+<head>
+    <title>23.me</title>
+</head>
+<body>
+    {{> header}}
+    {{> body}}
+</body>
+
+<template name="header">
+     <div class="navbar">
+          <div class="navbar-inner">
+              <div class="container">
+		 <a>23</a>
+                 <div class="nav pull-right">
+		   {{> user_info}}
+                 </div>
+               </div>
+          </div>
+      </div>
+</template>
+
+<template name="body">
+     {{#if currentUser}}
+     {{> stocks}}
+     {{> input}}
+     {{> chartterms}}
+     {{else}}
+	 {{> welcome}}
+     {{> stocks}}
+     {{> input}}
+     {{> chartterms}}
+     {{/if}}
+ <input type="text" id="error"/>
+</template>
+
+<template name="welcome">
+<p> Welcome to 23. Please sign in. </p>
+</template>
+
+<template name="user_info">
+    <ul class="nav pull-right">
+         {{#if currentUser}}
+             {{> user_loggedin}}
+         {{else}}
+             {{> user_loggedout}}
+         {{/if}}
+   </ul>
+</template>
+<template name="user_loggedin">
+    {{#if loggingIn}}
+        <li>Logging in...</li>
+    {{else}}
+        <li class="dropdown">
+            <a href="#" class="dropdown-toggle" data-toggle="dropdown">
+                {{user}}
+                <b class="caret"></b>
+            </a>
+            <ul class="dropdown-menu">
+                 <li><a id="logout">Logout</a></li>
+            </ul>
+        </li>
+    {{/if}}
+</template>
+
+<template name="user_loggedout">
+<li>{{> loginButtons align="right"}}</li>
+</template>
+
+<template name="layout">
+     <div class="navbar navbar-static-top navbar-inverse">
+         <div class="navbar-inner">
+             <div class="nav pull-right">
+             {{> user_info}}
+            </div>
+        </div>
+    </div>
+ {{{yield}}}
+</template>
+
+<template name="chartterms">
+<div class="chartterms">
+{{#each chartterms}}
+	{{> chartterm}}
+  {{/each}}
+</div>
+</template>
+
+<template name="chartterm">
+  <div class="chartterm">
+	{{> inputchartterms}}
+</div>
+</template>
+
+<template name="inputchartterms">
+ <div class="input">
+  Chart 1 term: <input type="text" id="c1" value='{{termc1}}' />
+  Chart 2 term: <input type="text" id="c2" value='{{termc2}}' />
+  Chart 3 term: <input type="text" id="c3" value='{{termc3}}' />
+  Chart 4 term: <input type="text" id="c4" value='{{termc4}}' />
+</div>
+</template>
+
+<template name="stocks">
+<div class="stocks">
+{{#each stocks}}
+	{{> stock}}
+  {{/each}}
+</div>
+</template>
+
+<template name="stock">
+  <div class="stock">
+  <input type="button" value="e" class="edit"/>
+  <span class="name">
+  {{tag}} 
+  {{desc}}
+  <strong>{{stock}}</strong>
+  {{nrstock}} 
+  <br>
+  <input type="button" value="X" class="delete"/>
+  <a href="http://www.google.com/finance?chdnp=1&chdd=1&chds=1&chdv=1&chvs=maximized&chdeh=0&chfdeh=0&chls=IntervalBasedLine&q=NASDAQ:{{nrstock}}&ntsp=0">
+      <img src="http://charts.reuters.com/reuters/enhancements/chartapi/chart_api.asp?width=308&height=252&symbol={{stock}}&duration={{getc1}}&lowers=volume&headertype=none"/>
+      <img src="http://charts.reuters.com/reuters/enhancements/chartapi/chart_api.asp?width=308&height=252&symbol={{stock}}&duration={{getc2}}&lowers=volume&headertype=none"/>
+      <img src="http://charts.reuters.com/reuters/enhancements/chartapi/chart_api.asp?width=308&height=252&symbol={{stock}}&duration={{getc3}}&lowers=volume&headertype=none"/>
+      <img src="http://charts.reuters.com/reuters/enhancements/chartapi/chart_api.asp?width=308&height=252&symbol={{stock}}&duration={{getc4}}&lowers=volume&headertype=none"/>
+  </a>
+  </span><br/>
+  </div>
+</template>
+
+<template name="input">
+ <div class="input">
+	 <input type="checkbox" name="cbxExample" id="cbxExample" {{checked cbxExample}}>Edit List
+	 {{#if checked cbxExample}}
+     <p>
+ Tag: <input type="text" id="tag"/>
+ Company: <input type="text" id="desc"/>
+ Reuters: <input type="text" id="stock"/>
+ Symbol: <input type="text" id="nrstock"/>
+ <label for="stock">Clean</label>
+ </p>
+    {{/if}}
+ </div>
+ </template>
+
