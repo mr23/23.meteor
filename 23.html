@@ -1,16 +1,37 @@
 <head>
-    <title>23.me</title>
+    <title>Stocks.23.meteor.com</title>
 </head>
 <body>
     {{> header}}
     {{> body}}
+    {{#if currentUser}}
+    {{else}}
+    {{> visitors}}
+    {{/if}}
 </body>
+
+<template name="visitors">
+<div class="visitors">
+	     Visitors:<br>
+	     {{#each visitors}}
+	     {{> aVisitor}}
+	     {{/each}}
+</div>
+</template>
+
+<template name="aVisitor">
+Visitor: {{date}} {{visitor}}<br>
+</template>
 
 <template name="header">
      <div class="navbar">
           <div class="navbar-inner">
               <div class="container">
-		 <a>23</a>
+         <h3>
+		 <a target="_blank" href="http://themr23.wordpress.com/stocks-23-meteor-com">Stocks, by CMeier</a>
+		 </h3>
+		 <a>Users {{userCount}}</a>,
+		 <a>Visitors {{visitorCount}}</a>
                  <div class="nav pull-right">
 		   {{> user_info}}
                  </div>
@@ -34,7 +55,7 @@
 </template>
 
 <template name="welcome">
-<p> Welcome to 23. Please sign in. </p>
+<p> Welcome to 'Stocks'. Please sign in. </p>
 </template>
 
 <template name="user_info">
@@ -130,16 +151,13 @@
 
 <template name="input">
  <div class="input">
-	 <input type="checkbox" name="cbxExample" id="cbxExample" {{checked cbxExample}}>Edit List
-	 {{#if checked cbxExample}}
      <p>
  Tag: <input type="text" id="tag"/>
  Company: <input type="text" id="desc"/>
  Reuters: <input type="text" id="stock"/>
  Symbol: <input type="text" id="nrstock"/>
- <label for="stock">Clean</label>
+ <label for="stock"></label>
  </p>
-    {{/if}}
  </div>
  </template>
 

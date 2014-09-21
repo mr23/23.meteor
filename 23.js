@@ -1,6 +1,7 @@
 
 Stocks = new Meteor.Collection('stocks');
 ChartTerms = new Meteor.Collection('terms');
+AllVisits = new Meteor.Collection('visits');
 
 var c1 = 3653;
 var c2 =  730;
@@ -8,6 +9,21 @@ var c3 =   61;
 var c4 =    1;
 
 if (Meteor.isClient) {
+  var d = new Date();
+  var sid = AllVisits.insert({date: d});
+  Session.set("SVselectedVisit",sid);
+
+  Template.header.userCount = function() {
+    return Meteor.users.find().count();
+  };
+  Template.header.visitorCount = function() {
+      return AllVisits.find().count();
+  };
+   Template.visitors.visitors = function() {
+	  var items =  AllVisits.find({},{sort: {date: +1}}).fetch();
+      return items.slice(-10);
+  };
+
   Template.user_loggedin.user = function() {
 	return Meteor.user().username;
    };
@@ -44,23 +60,32 @@ if (Meteor.isClient) {
  //});
  
  Template.chartterms.chartterms = function() {
-	 return ChartTerms.find({name:resiliantusername() });
+     var rUN = resiliantusername();
+     var fo = ChartTerms.findOne({name:rUN});
+     if (!fo) fo = ChartTerms.findOne({name:"guest"});
+	 return [fo];
  }
 
  Template.stocks.stocks = function() {
-	 return Stocks.find({name:resiliantusername() }, { sort: {desc: +1}});
+     var rUN = resiliantusername();
+     var fa = Stocks.find({name:rUN}, { sort: {desc: +1}});
+     if (!fa) fa = Stocks.find({name:"guest"}, { sort: {desc: +1}});
+     console.log("fa " + rUN + " "  + JSON.stringify(fa));
+	 return fa;
  }
  
  function resiliantusername() {
-  var name = 'nobody';
+  var name = "guest";
   if (Meteor.userId() && Meteor.user() && Meteor.user().profile)
   {
 	  name = Meteor.user().profile.name;
+      console.log("rUNi: " + name);
   }
   else if (Meteor.userId())
   {
 	  var foundUser = Meteor.users.findOne({_id:Meteor.userId()});
-	  name = foundUser ? (foundUser.profile ? foundUser.profile.name : ( foundUser.username ? foundUser.username : "no username") ) : "no userId in Meteor";
+	  name = foundUser ? (foundUser.profile ? foundUser.profile.name : ( foundUser.username ? foundUser.username : "guest") ) : "guest";
+      console.log("rUNe: " + name);
   }
   return name;
  }
@@ -68,39 +93,34 @@ if (Meteor.isClient) {
  Template.stock.getc1 = function() {
      var rUN = resiliantusername();
      var fo = ChartTerms.findOne({name:rUN});
-     if (!fo) fo = ChartTerms.findOne();
-     console.log("c1 " + JSON.stringify(fo));
-     console.log("c1 " + c1 + " " + fo.termc1);
-     return fo.termc1? fo.termc1 : c1;
+     if (!fo) fo = ChartTerms.findOne({name:"guest"});
+     //console.log("c1 " + JSON.stringify(fo));
+     return fo && fo.termc1? fo.termc1 : c1;
  };
  Template.stock.getc2 = function() {
      var rUN = resiliantusername();
      var fo = ChartTerms.findOne({name:rUN});
-     if (!fo) fo = ChartTerms.findOne();
-     console.log("c2 " + JSON.stringify(fo));
-     console.log("c2 " + c2 + " " + fo.termc2);
-     return fo.termc2? fo.termc2 : c2;
+     if (!fo) fo = ChartTerms.findOne({name:"guest"});
+     return fo && fo.termc2? fo.termc2 : c2;
  };
  Template.stock.getc3 = function() {
      var rUN = resiliantusername();
      var fo = ChartTerms.findOne({name:rUN});
-     if (!fo) fo = ChartTerms.findOne();
-     console.log("c3 " + JSON.stringify(fo));
-     console.log("c3 " + c3 + " " + fo.termc3);
-     return fo.termc3? fo.termc3 : c3;
+     if (!fo) fo = ChartTerms.findOne({name:"guest"});
+     return fo && fo.termc3? fo.termc3 : c3;
  };
  Template.stock.getc4 = function() {
      var rUN = resiliantusername();
      var fo = ChartTerms.findOne({name:rUN});
-     if (!fo) fo = ChartTerms.findOne();
-     console.log("c4 " + JSON.stringify(fo));
-     console.log("c4 " + c4 + " " + fo.termc4);
-     return fo.termc4? fo.termc4 : c4;
+     if (!fo) fo = ChartTerms.findOne({name:"guest"});
+     return fo && fo.termc4? fo.termc4 : c4;
  };
 
  Template.stocks.events = ({
    'click input.delete': function() {
+      if (Stocks.find().count() > 3) {
       Stocks.remove(this._id);
+      }
    },
    'click input.edit': function() {
       document.getElementById('nrstock').value = this.nrstock;
@@ -189,7 +209,15 @@ Template.input.checked = function(currentValue) {
  };
  Template.input.events = {
   'keydown input#stock' : function(event) {
-	  if (event.which == 13) {
+        ProcessStockInput(event);
+  },
+  'keydown input#nrstock' : function(event) {
+        ProcessStockInput(event);
+  }
+ };
+
+ ProcessStockInput = function(event) {
+	  if (event.which == 13 || event.which == 9) {
 		  var name = resiliantusername();
 		  var nrstock = document.getElementById('nrstock').value.trim();
 		  var stock = document.getElementById('stock').value.trim();
@@ -222,10 +250,7 @@ Template.input.checked = function(currentValue) {
 		      tag.value = '';
 		  }
 	  }
-	  else
-	    document.getElementById('error').value = '';
-  }
- }
+ };
 
  Template.inputchartterms.error = function() {
 	 return Session.get("error");
@@ -233,52 +258,84 @@ Template.input.checked = function(currentValue) {
  
  Template.inputchartterms.events = {
   'keydown input#c1' : function(event) {
-	  if (event.which == 13) {
-        console.log("c1 13");
+	  if (event.which == 13 || event.which == 9) {
+        var rUN = resiliantusername();
 		  var name = resiliantusername();
 		  var vc = document.getElementById('c1').value.trim();
 		  if (Validation.inputtermAcceptable(vc)) {
               c1 = vc;
-              ChartTerms.update(this._id, {$set: {termc1: vc}});
+              var fo = ChartTerms.findOne({name:rUN});
+              if (fo) { // assume they had one
+              ChartTerms.update(this._id, {$set: {termc1: c1}});
+              }
+              else  // otherwise full insert instead
+              {
+                ChartTerms.insert({name: rUN, termc1: c1,
+                                   termc2: "730", termc3: "61", termc4: "3"});
+              }
 		  }
 	  }
 	  else
 	    document.getElementById('error').value = '';
   },
   'keydown input#c2' : function(event) {
-	  if (event.which == 13) {
-        console.log("c2 13");
+	  if (event.which == 13 || event.which == 9) {
+        var rUN = resiliantusername();
 		  var name = resiliantusername();
 		  var vc = document.getElementById('c2').value.trim();
 		  if (Validation.inputtermAcceptable(vc)) {
               c2 = vc;
-              ChartTerms.update(this._id, {$set: {termc2: vc}});
+              var fo = ChartTerms.findOne({name:rUN});
+              if (fo) { // assume they had one
+              ChartTerms.update(this._id, {$set: {termc2: c2}});
+              }
+              else  // otherwise full insert instead
+              {
+                ChartTerms.insert({name: rUN, termc1: "3653",
+                                   termc2: c2, termc3: "61", termc4: "3"});
+              }
 		  }
 	  }
 	  else
 	    document.getElementById('error').value = '';
   },
   'keydown input#c3' : function(event) {
-	  if (event.which == 13) {
-        console.log("c3 13");
+	  if (event.which == 13 || event.which == 9) {
+        var rUN = resiliantusername();
 		  var name = resiliantusername();
 		  var vc = document.getElementById('c3').value.trim();
 		  if (Validation.inputtermAcceptable(vc)) {
               c3 = vc;
-              ChartTerms.update(this._id, {$set: {termc3: vc}});
+              var fo = ChartTerms.findOne({name:rUN});
+              if (fo) { // assume they had one
+              ChartTerms.update(this._id, {$set: {termc3: c3}});
+              }
+              else  // otherwise full insert instead
+              {
+                ChartTerms.insert({name: rUN, termc1: "3653",
+                                   termc2: "730", termc3: c3, termc4: "3"});
+              }
 		  }
 	  }
 	  else
 	    document.getElementById('error').value = '';
   },
   'keydown input#c4' : function(event) {
-	  if (event.which == 13) {
-        console.log("c4 13");
+	  if (event.which == 13 || event.which == 9) {
+        var rUN = resiliantusername();
 		  var name = resiliantusername();
 		  var vc = document.getElementById('c4').value.trim();
 		  if (Validation.inputtermAcceptable(vc)) {
               c4 = vc;
+              var fo = ChartTerms.findOne({name:rUN});
+              if (fo) { // assume they had one
               ChartTerms.update(this._id, {$set: {termc4: vc}});
+              }
+              else  // otherwise full insert instead
+              {
+                ChartTerms.insert({name: rUN, termc1: "3653",
+                                   termc2: "730", termc3: "61", termc4: c4});
+              }
 		  }
 	  }
 	  else
@@ -295,14 +352,14 @@ if (Meteor.isServer) {
     if (Stocks.find().count() === 0) {
 	    Stocks.insert({name: "themr23", tag: "Index", desc: "_Index, Dow Jones", stock: ".DJI", nrstock: ".DJI"});
 	    Stocks.insert({name: "themr23", tag: "Emp", desc: "Rudolph", stock: "RTEC.N", nrstock: "RTEC"});
-	    Stocks.insert({name: "themr23", tag: "Comp", desc: "KLA-Tencor", stock: "KLAC.O", nrstock: "KLAC" });
-	    Stocks.insert({name: "test", tag: "Index", desc: "_Index, Dow Jones", stock: ".DJI", nrstock: ".DJI"});
-	    Stocks.insert({name: "test", tag: "Emp", desc: "Rudolph", stock: "RTEC.N", nrstock: "RTEC"});
-	    Stocks.insert({name: "test", tag: "Comp", desc: "KLA-Tencor", stock: "KLAC.O", nrstock: "KLAC" });
+	    Stocks.insert({name: "themr23", tag: "SEMI", desc: "KLA-Tencor", stock: "KLAC.O", nrstock: "KLAC" });
+	    Stocks.insert({name: "guest", tag: "Index", desc: "_Index, Dow Jones", stock: ".DJI", nrstock: ".DJI"});
+	    Stocks.insert({name: "guest", tag: "Auto", desc: "Ford", stock: "F", nrstock: "F"});
+	    Stocks.insert({name: "guest", tag: "Comp", desc: "KLA-Tencor", stock: "KLAC.O", nrstock: "KLAC" });
     }
     if (ChartTerms.find().count() === 0) {
-        ChartTerms.insert({name: "themr23", termc1: "3653",
-                           termc2: "730", termc3: "61", termc4: "1"});
+        ChartTerms.insert({name: "guest", termc1: "3653",
+                           termc2: "730", termc3: "61", termc4: "3"});
     }
   });
  
