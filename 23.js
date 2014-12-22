@@ -118,8 +118,14 @@ if (Meteor.isClient) {
 
  Template.stocks.events = ({
    'click input.delete': function() {
-      if (Stocks.find().count() > 3) {
-      Stocks.remove(this._id);
+     var rUN = resiliantusername();
+     var fa = Stocks.find({name:rUN});
+    //document.getElementById('error').value = 'fa';
+     if (!fa || rUN == "guest") {
+         if (!fa) fa = Stocks.find({name:"guest"});
+         if (fa.count() > 3) {
+             Stocks.remove(this._id);
+         }
       }
    },
    'click input.edit': function() {
@@ -351,11 +357,12 @@ if (Meteor.isServer) {
     // code to run on server at startup
     if (Stocks.find().count() === 0) {
 	    Stocks.insert({name: "themr23", tag: "Index", desc: "_Index, Dow Jones", stock: ".DJI", nrstock: ".DJI"});
-	    Stocks.insert({name: "themr23", tag: "Emp", desc: "Rudolph", stock: "RTEC.N", nrstock: "RTEC"});
+	    Stocks.insert({name: "themr23", tag: "SEMI", desc: "Rudolph", stock: "RTEC.N", nrstock: "RTEC"});
 	    Stocks.insert({name: "themr23", tag: "SEMI", desc: "KLA-Tencor", stock: "KLAC.O", nrstock: "KLAC" });
 	    Stocks.insert({name: "guest", tag: "Index", desc: "_Index, Dow Jones", stock: ".DJI", nrstock: ".DJI"});
 	    Stocks.insert({name: "guest", tag: "Auto", desc: "Ford", stock: "F", nrstock: "F"});
 	    Stocks.insert({name: "guest", tag: "Comp", desc: "KLA-Tencor", stock: "KLAC.O", nrstock: "KLAC" });
+	    Stocks.insert({name: "guest", tag: "SEMI", desc: "Rudolph", stock: "RTEC.N", nrstock: "RTEC"});
     }
     if (ChartTerms.find().count() === 0) {
         ChartTerms.insert({name: "guest", termc1: "3653",
